@@ -60,5 +60,8 @@ filetrack:
 
 ## Removing Sensors
 
-* **UI/Service Sensors:** Open **Settings → Devices & Services → FileTrack → Configure** (gear icon). Select "Remove FileTrack sensors". Select sensors to remove and complete the confirmation. 
-* **YAML Sensors:** Remove the relevant entries from your `configuration.yaml` file and restart Home Assistant.
+> 💡 Per-sensor removal lives **behind the gear icon**, not on the integration card itself — that part trips a lot of people up.
+
+* **UI / service sensors:** Open **Settings → Devices & Services → FileTrack → Configure** (gear icon) → **Remove FileTrack sensors**. Tick the sensors you want gone and confirm.
+* **YAML sensors:** Remove the relevant entries from your `configuration.yaml` and restart Home Assistant.
+* **Remove the whole integration:** Use the **Delete** option on the FileTrack integration card. The sensor store is wiped automatically, so a future re-install starts clean instead of resurrecting old sensors.

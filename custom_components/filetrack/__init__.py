@@ -133,6 +133,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return await hass.config_entries.async_unload_platforms(entry, ["sensor"])
 
 
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Wipe the persisted sensor store when the integration is removed.
+
+    Without this, deleting the integration from the UI leaves
+    `.storage/filetrack.sensors` behind as an orphaned file — any
+    re-install would resurrect old sensors. Removing the store here
+    keeps uninstall clean.
+    """
+    store = Store(hass, STORAGE_VERSION, STORAGE_KEY)
+    await store.async_remove()
+    _LOGGER.info("FileTrack: sensor store cleared on integration removal")
+
+
 async def async_migrate_filetrack_entities(hass):
     _LOGGER.info("FileTrack: First run. Checking sensors for v2 migration")
     registry = er.async_get(hass)
