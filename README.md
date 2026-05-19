@@ -1,6 +1,6 @@
 # FileTrack
 
-A Home Assistant custom component that monitors folders and exposes their total size as a sensor, along with file count and a `fileList` attribute. It is perfectly designed as a companion for the [Camera Gallery Card](https://github.com/TheScubadiver/camera-gallery-card), but can also be used as a standalone integration.
+A Home Assistant custom component that monitors folders and exposes their total size as a sensor, along with file count and a `fileList` attribute. It is perfectly designed as a companion for the [Camera Gallery Card](https://github.com/TheScubaDiver/camera-gallery-card), but can also be used as a standalone integration.
 
 
 ## Installation
@@ -23,7 +23,7 @@ Open **Settings → Devices & Services → FileTrack → Configure** (gear icon)
 <img width="444" height="470" alt="image" src="https://github.com/user-attachments/assets/94fae908-228c-4e1f-9da2-c17b4a8e1e54" />
 
 ### Method 2 — Camera Gallery Card
-Sensors are created directly from the **[Camera Gallery Card](https://github.com/TheScubadiver/camera-gallery-card) Editor** — no YAML, service calls, or manual setup required.
+Sensors are created directly from the **[Camera Gallery Card](https://github.com/TheScubaDiver/camera-gallery-card) Editor** — no YAML, service calls, or manual setup required.
 
 <img width="418" height="380" alt="image" src="https://github.com/user-attachments/assets/e0c5b505-f94b-48f8-b8a3-dbadee3cd41b" />
 
@@ -38,19 +38,19 @@ filetrack:
       name: Snapshots
       unique_id: snapshots_jpg
       sort: date
-      recursive: True
+      recursive: true
 ```
 
 #### YAML Configuration Variables
 
 | Name | Type | Default | Description
 | ---- | ---- | ------- | -----------
-| platform | string | **Required** | `filetrack`
-| folder | string | **Required** | Folder to scan. Must begin with /config/www/\<your-folder\>
-| name | string | **Required** | The entity ID for the sensor
-| unique_id | string | **Optional** | Allows an entity to be customized/deleted correctly. `Default: none`
-| sort | string | **Optional** | One of 'name', 'date', or 'size'. Determines the sort order for viewing. `Default: date`
-| recursive | boolean | **Optional** | If True, search every subfolder under the configured `folder`, matching `filter` at any depth. `Default: False`. **Note:** in deep trees this can be slow — keep `filter` specific (e.g. `*.jpg`) for large folders.
+| name | string | **Required** | Friendly name for the sensor (used as the entity ID).
+| folder | string | **Required** | Folder to scan. Must begin with `/config/www/<your-folder>`.
+| filter | string | `*` | Glob pattern matched against filenames (e.g. `*.jpg`).
+| unique_id | string | none | Custom unique_id so the entity can be customised/removed via the UI.
+| sort | string | `date` | One of `name`, `date`, or `size`.
+| recursive | boolean | `false` | If true, search every subfolder under `folder`, matching `filter` at any depth. **Note:** in deep trees this can be slow — keep `filter` specific (e.g. `*.jpg`) for large folders.
 
 *Note1: Restart Home Assistant after adding YAML entries.*
 
