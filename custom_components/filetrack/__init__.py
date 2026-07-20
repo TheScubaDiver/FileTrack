@@ -59,13 +59,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN]["add_entities"] = None
     hass.data[DOMAIN].setdefault("yaml_sensors", [])
 
-    # Check for old/unlinked sensors
-    if entry.version < MIGRATION_VERSION:
-        await async_migrate_filetrack_entities(hass)
-        hass.config_entries.async_update_entry(
-            entry,
-            version=MIGRATION_VERSION,
+    # Fixed migration logic
+    data_version = entry.data.get("data_version")
+
+    if data_version is not None and data_version >= MIGRATION_VERSION:
+        # Check data version
+        _LOGGER.debug("FileTrack: Data version %s. Migration not needed.", data_version)
+    else:
+        registry = er.async_get(hass)
+        has_legacy = any(
+            entity.domain == "sensor" and entity.platform == DOMAIN and not entity.unique_id
+            for entity in registry.entities.values()
         )
+
+        if data_version is None and not has_legacy and not stored["sensors"]:
+            # Check for existing sensors
+            _LOGGER.info("FileTrack: No existing sensors. Migration not needed. Set data version to %s.", MIGRATION_VERSION)
+            hass.config_entries.async_update_entry(
+                entry,
+                data={**entry.data, "data_version": MIGRATION_VERSION},
+            )
+        else:
+            # Migration required
+            await async_migrate_filetrack_entities(hass)
+            hass.config_entries.async_update_entry(
+                entry,
+                data={**entry.data, "data_version": MIGRATION_VERSION},
+            )
     
     # Create device in registry for proper linking
     from homeassistant.helpers import device_registry as dr
@@ -124,7 +144,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
-    """Satisfy Home Assistant core migration requirement."""
+    """Satisfy core migration requirement. Version 2 avoids any migration problems"""
+    hass.config_entries.async_update_entry(config_entry, version=2)
     return True
     
 
