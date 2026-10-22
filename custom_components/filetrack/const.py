@@ -13,3 +13,6 @@ DEFAULT_SORT = "date"
 DEFAULT_RECURSIVE = False
 
 SORT_OPTIONS = ["date", "name", "size"]
+
+CONF_MAX_AGE = "max_age"
+DEFAULT_MAX_AGE = 0

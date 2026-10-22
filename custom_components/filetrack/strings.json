@@ -16,6 +16,7 @@
         "title": "Manage Sensors",
         "menu_options": {
           "add_sensor": "Add a new FileTrack sensor",
+          "edit_sensor": "Edit a FileTrack sensor",
           "remove_sensor": "Remove FileTrack sensors"
         }
       },
@@ -26,7 +27,28 @@
           "folder": "Folder Path",
           "filter": "Filter (e.g. *.jpg)",
           "sort": "Sort Criteria",
-          "recursive": "Search Subfolders"
+          "recursive": "Search Subfolders",
+          "max_age": "Retention (days, 0 = keep forever)"
+        },
+        "errors": {
+          "invalid_path": "Path must start with /config/www/"
+        }
+      },
+      "edit_sensor": {
+        "title": "Edit sensor",
+        "description": "Select the sensor you want to edit.",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "edit_details": {
+        "title": "Edit {name}",
+        "data": {
+          "folder": "Folder Path",
+          "filter": "Filter (e.g. *.jpg)",
+          "sort": "Sort Criteria",
+          "recursive": "Search Subfolders",
+          "max_age": "Retention (days, 0 = keep forever)"
         },
         "errors": {
           "invalid_path": "Path must start with /config/www/"
@@ -51,8 +73,9 @@
       "no_selection": "Please select at least one sensor to remove."
     },
     "abort": {
-      "no_sensors": "There are no sensors to remove.",
-      "cancelled": "Operation cancelled."
+      "no_sensors": "There are no sensors to edit or remove.",
+      "cancelled": "Operation cancelled.",
+      "sensor_not_found": "The selected sensor could not be found."
     }
   }
 }

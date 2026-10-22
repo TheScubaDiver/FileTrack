@@ -1,5 +1,6 @@
 import glob
 import os
+import time
 import logging
 from datetime import timedelta
 
@@ -8,7 +9,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.components.sensor import SensorEntity, PLATFORM_SCHEMA
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import slugify
-from .const import DOMAIN, CONF_FOLDER_PATHS, CONF_FILTER, CONF_SORT, CONF_RECURSIVE, CONF_UNIQUE_ID, DEFAULT_FILTER, DEFAULT_SORT, DEFAULT_RECURSIVE, SORT_OPTIONS
+from .const import DOMAIN, CONF_FOLDER_PATHS, CONF_FILTER, CONF_SORT, CONF_RECURSIVE, CONF_UNIQUE_ID, CONF_MAX_AGE, DEFAULT_FILTER, DEFAULT_SORT, DEFAULT_RECURSIVE, DEFAULT_MAX_AGE, SORT_OPTIONS
 
 _LOGGER = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(minutes=1)
@@ -19,6 +20,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_FILTER, default=DEFAULT_FILTER): cv.string,
     vol.Optional(CONF_SORT, default=DEFAULT_SORT): vol.In(SORT_OPTIONS),
     vol.Optional(CONF_RECURSIVE, default=DEFAULT_RECURSIVE): cv.boolean,
+    vol.Optional(CONF_MAX_AGE, default=DEFAULT_MAX_AGE): cv.positive_int,
     vol.Optional(CONF_UNIQUE_ID): cv.string,
 })
 
@@ -46,6 +48,20 @@ def get_files_list(folder_path, filter_term, sort, recursive):
     else:  # date
         return sorted(files, key=os.path.getmtime, reverse=True)
 
+def cleanup_old_files(folder_path, filter_term, recursive, max_age_days):
+    """Delete files older than max_age_days. 0 disables cleanup."""
+    if not max_age_days or max_age_days <= 0:
+        return
+    cutoff = time.time() - max_age_days * 86400
+    files = get_files_list(folder_path, filter_term, "date", recursive)
+    for f in files:
+        try:
+            if os.path.getmtime(f) < cutoff:
+                os.remove(f)
+                _LOGGER.debug("FileTrack: deleted old file %s", f)
+        except OSError as err:
+            _LOGGER.warning("FileTrack: could not delete %s: %s", f, err)
+
 
 async def async_setup_entry(hass, entry, async_add_entities):
     """Laad sensoren vanuit de opgeslagen configuratie."""
@@ -65,7 +81,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             sc.get(CONF_SORT, DEFAULT_SORT),
             sc.get(CONF_RECURSIVE, DEFAULT_RECURSIVE),
             f"filetrack_{sc['id']}",
-            config_entry=entry
+            config_entry=entry,
+            max_age=sc.get(CONF_MAX_AGE, DEFAULT_MAX_AGE),
         ))
     for yc in yaml_config:
         name = yc["name"]
@@ -82,7 +99,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             yc.get(CONF_SORT, DEFAULT_SORT),
             yc.get(CONF_RECURSIVE, DEFAULT_RECURSIVE),
             unique_id,
-            config_entry=entry           
+            config_entry=entry,
+            max_age=yc.get(CONF_MAX_AGE, DEFAULT_MAX_AGE),
         ))
     if entities:
         async_add_entities(entities, True)
@@ -93,10 +111,11 @@ class FileTrackSensor(SensorEntity):
     _attr_icon = "mdi:folder"
     _attr_native_unit_of_measurement = "MB"
 
-    def __init__(self, folder_path, name, filter_term, sort, recursive, entry_id, config_entry=None):
+    def __init__(self, folder_path, name, filter_term, sort, recursive, entry_id, config_entry=None, max_age=0):
         self._attr_name = name
         self._attr_unique_id = entry_id
         self._attr_suggested_object_id = slugify(name)
+        self._max_age = max_age
 
         # Keep existing sensor_id for UI and YAML
         if entry_id.startswith("filetrack_"):
@@ -116,6 +135,7 @@ class FileTrackSensor(SensorEntity):
 
     def update(self):
         """Haal de nieuwe data op."""
+        cleanup_old_files(self._folder_path, self._filter_term, self._recursive, self._max_age)
         files_list = get_files_list(self._folder_path, self._filter_term, self._sort, self._recursive)
         total_size = sum(os.path.getsize(f) for f in files_list if os.path.isfile(f))
 

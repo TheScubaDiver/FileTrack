@@ -16,6 +16,7 @@
         "title": "Beheer sensoren",
         "menu_options": {
           "add_sensor": "Nieuwe FileTrack-sensor toevoegen",
+          "edit_sensor": "FileTrack-sensor bewerken",
           "remove_sensor": "FileTrack-sensoren verwijderen"
         }
       },
@@ -26,7 +27,28 @@
           "folder": "Map pad",
           "filter": "Filter (bijv. *.jpg)",
           "sort": "Sortering",
-          "recursive": "Submappen doorzoeken"
+          "recursive": "Submappen doorzoeken",
+          "max_age": "Bewaartermijn (dagen, 0 = altijd bewaren)"
+        },
+        "errors": {
+          "invalid_path": "Het pad moet beginnen met /config/www/"
+        }
+      },
+      "edit_sensor": {
+        "title": "Sensor bewerken",
+        "description": "Selecteer de sensor die je wilt bewerken.",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "edit_details": {
+        "title": "{name} bewerken",
+        "data": {
+          "folder": "Map pad",
+          "filter": "Filter (bijv. *.jpg)",
+          "sort": "Sortering",
+          "recursive": "Submappen doorzoeken",
+          "max_age": "Bewaartermijn (dagen, 0 = altijd bewaren)"
         },
         "errors": {
           "invalid_path": "Het pad moet beginnen met /config/www/"
@@ -51,8 +73,9 @@
       "no_selection": "Selecteer minimaal één sensor om te verwijderen."
     },
     "abort": {
-      "no_sensors": "Er zijn geen sensoren om te verwijderen.",
-      "cancelled": "Bewerking geannuleerd."
+      "no_sensors": "Er zijn geen sensoren om te bewerken of te verwijderen.",
+      "cancelled": "Bewerking geannuleerd.",
+      "sensor_not_found": "De geselecteerde sensor kon niet worden gevonden."
     }
   }
 }

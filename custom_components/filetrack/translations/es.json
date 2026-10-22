@@ -1,0 +1,81 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar FileTrack",
+        "description": "Haz clic en Enviar para activar FileTrack. Luego usa el menú de configuración para añadir sensores."
+      }
+    },
+    "abort": {
+      "already_configured": "FileTrack ya está añadido. Usa el menú de configuración para añadir sensores."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Gestionar sensores",
+        "menu_options": {
+          "add_sensor": "Añadir un nuevo sensor de FileTrack",
+          "edit_sensor": "Editar un sensor de FileTrack",
+          "remove_sensor": "Eliminar sensores de FileTrack"
+        }
+      },
+      "add_sensor": {
+        "title": "Añadir nuevo sensor",
+        "data": {
+          "name": "Nombre del sensor",
+          "folder": "Ruta de la carpeta",
+          "filter": "Filtro (p. ej. *.jpg)",
+          "sort": "Criterio de orden",
+          "recursive": "Buscar en subcarpetas",
+          "max_age": "Retención (días, 0 = conservar siempre)"
+        },
+        "errors": {
+          "invalid_path": "La ruta debe comenzar con /config/www/"
+        }
+      },
+      "edit_sensor": {
+        "title": "Editar sensor",
+        "description": "Selecciona el sensor que quieres editar.",
+        "data": {
+          "sensor": "Sensor"
+        }
+      },
+      "edit_details": {
+        "title": "Editar {name}",
+        "data": {
+          "folder": "Ruta de la carpeta",
+          "filter": "Filtro (p. ej. *.jpg)",
+          "sort": "Criterio de orden",
+          "recursive": "Buscar en subcarpetas",
+          "max_age": "Retención (días, 0 = conservar siempre)"
+        },
+        "errors": {
+          "invalid_path": "La ruta debe comenzar con /config/www/"
+        }
+      },
+      "remove_sensor": {
+        "title": "Eliminar sensores",
+        "description": "Selecciona el sensor o sensores que quieres eliminar.\n*NOTA: Los sensores definidos en configuration.yaml no se pueden eliminar aquí.*",
+        "data": {
+          "sensors": "Sensores a eliminar:"
+        }
+      },
+      "confirm": {
+        "title": "Confirmar eliminación",
+        "description": "Estás a punto de eliminar permanentemente los siguientes sensores:\n\n**{names}**",
+        "data": {
+          "confirm": "Sí, eliminar estos sensores"
+        }
+      }
+    },
+    "error": {
+      "no_selection": "Selecciona al menos un sensor para eliminar."
+    },
+    "abort": {
+      "no_sensors": "No hay sensores para editar o eliminar.",
+      "cancelled": "Operación cancelada.",
+      "sensor_not_found": "No se pudo encontrar el sensor seleccionado."
+    }
+  }
+}

@@ -4,7 +4,7 @@ from homeassistant import config_entries
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers import selector
 import voluptuous as vol
-from .const import (DOMAIN, CONF_FOLDER_PATHS, CONF_FILTER, CONF_SORT, CONF_RECURSIVE, DEFAULT_FILTER, DEFAULT_SORT, DEFAULT_RECURSIVE, SORT_OPTIONS)
+from .const import (DOMAIN, CONF_FOLDER_PATHS, CONF_FILTER, CONF_SORT, CONF_RECURSIVE, CONF_MAX_AGE, DEFAULT_FILTER, DEFAULT_SORT, DEFAULT_RECURSIVE, DEFAULT_MAX_AGE, SORT_OPTIONS)
 
 STORAGE_VERSION = 1
 STORAGE_KEY = f"{DOMAIN}.sensors"
@@ -34,12 +34,13 @@ class FileTrackOptionsFlow(config_entries.OptionsFlow):
     def __init__(self, config_entry):
         self._config_entry = config_entry
         self._to_remove = []
+        self._to_edit = None
 
     async def async_step_init(self, user_input=None):
         _LOGGER.debug("FileTrack: Options menu requested (async_step_init)")
         return self.async_show_menu(
             step_id="init",
-            menu_options=["add_sensor", "remove_sensor"]
+            menu_options=["add_sensor", "edit_sensor", "remove_sensor"]
         )
 
     async def async_step_add_sensor(self, user_input=None):
@@ -59,6 +60,7 @@ class FileTrackOptionsFlow(config_entries.OptionsFlow):
                     CONF_FILTER: user_input.get(CONF_FILTER, DEFAULT_FILTER),
                     CONF_SORT: user_input.get(CONF_SORT, DEFAULT_SORT),
                     CONF_RECURSIVE: user_input.get(CONF_RECURSIVE, DEFAULT_RECURSIVE),
+                    CONF_MAX_AGE: user_input.get(CONF_MAX_AGE, DEFAULT_MAX_AGE),
                 }
             
                 stored["sensors"].append(new_sensor)
@@ -72,9 +74,96 @@ class FileTrackOptionsFlow(config_entries.OptionsFlow):
             vol.Optional(CONF_FILTER, default=DEFAULT_FILTER): str,
             vol.Optional(CONF_SORT, default=DEFAULT_SORT): vol.In(SORT_OPTIONS),
             vol.Optional(CONF_RECURSIVE, default=DEFAULT_RECURSIVE): bool,
+            vol.Optional(CONF_MAX_AGE, default=DEFAULT_MAX_AGE): vol.All(int, vol.Range(min=0)),
         })
         
         return self.async_show_form(step_id="add_sensor", data_schema=data_schema, errors=errors)
+
+    async def async_step_edit_sensor(self, user_input=None):
+        """Select which sensor to edit."""
+        _LOGGER.debug("FileTrack: Edit sensor step triggered")
+        store = Store(self.hass, STORAGE_VERSION, STORAGE_KEY)
+        stored = await store.async_load() or {"sensors": []}
+        sensors = stored.get("sensors", [])
+
+        if not sensors:
+            return self.async_abort(reason="no_sensors")
+
+        if user_input is not None:
+            self._to_edit = user_input["sensor"]
+            return await self.async_step_edit_details()
+
+        options = [
+            {"value": s["id"], "label": f"{s['name']} ({s[CONF_FOLDER_PATHS]})"}
+            for s in sensors
+        ]
+        return self.async_show_form(
+            step_id="edit_sensor",
+            data_schema=vol.Schema({
+                vol.Required("sensor"): selector.SelectSelector(
+                    selector.SelectSelectorConfig(
+                        options=options,
+                        mode=selector.SelectSelectorMode.LIST,
+                    )
+                )
+            }),
+        )
+
+    async def async_step_edit_details(self, user_input=None):
+        """Edit the selected sensor's settings."""
+        errors = {}
+        store = Store(self.hass, STORAGE_VERSION, STORAGE_KEY)
+        stored = await store.async_load() or {"sensors": []}
+        current = next((s for s in stored["sensors"] if s["id"] == self._to_edit), None)
+
+        if current is None:
+            return self.async_abort(reason="sensor_not_found")
+
+        if user_input is not None:
+            folder = user_input[CONF_FOLDER_PATHS]
+            if not folder.startswith("/config/www/"):
+                errors[CONF_FOLDER_PATHS] = "invalid_path"
+            if not errors:
+                # Name and folder are kept immutable to avoid breaking the
+                # entity_id / unique_id; only the tunables are updated.
+                current[CONF_FILTER] = user_input.get(CONF_FILTER, DEFAULT_FILTER)
+                current[CONF_SORT] = user_input.get(CONF_SORT, DEFAULT_SORT)
+                current[CONF_RECURSIVE] = user_input.get(CONF_RECURSIVE, DEFAULT_RECURSIVE)
+                current[CONF_MAX_AGE] = user_input.get(CONF_MAX_AGE, DEFAULT_MAX_AGE)
+                await store.async_save(stored)
+                await self.hass.config_entries.async_reload(self._config_entry.entry_id)
+                _LOGGER.info("FileTrack: Updated sensor '%s'", current["name"])
+                return self.async_create_entry(title="", data={})
+
+        data_schema = vol.Schema({
+            vol.Required(
+                CONF_FOLDER_PATHS,
+                default=current.get(CONF_FOLDER_PATHS),
+            ): str,
+            vol.Optional(
+                CONF_FILTER,
+                default=current.get(CONF_FILTER, DEFAULT_FILTER),
+            ): str,
+            vol.Optional(
+                CONF_SORT,
+                default=current.get(CONF_SORT, DEFAULT_SORT),
+            ): vol.In(SORT_OPTIONS),
+            vol.Optional(
+                CONF_RECURSIVE,
+                default=current.get(CONF_RECURSIVE, DEFAULT_RECURSIVE),
+            ): bool,
+            vol.Optional(
+                CONF_MAX_AGE,
+                default=current.get(CONF_MAX_AGE, DEFAULT_MAX_AGE),
+            ): vol.All(int, vol.Range(min=0)),
+        })
+
+        return self.async_show_form(
+            step_id="edit_details",
+            data_schema=data_schema,
+            errors=errors,
+            description_placeholders={"name": current["name"]},
+        )
 
     async def async_step_remove_sensor(self, user_input=None):
         _LOGGER.debug("FileTrack: Remove sensor step triggered")
